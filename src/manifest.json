@@ -14,7 +14,7 @@
   ],
   "relaunchButtons": [
     {
-      "command": "c0f24597-6cf3-431b-83aa-73cf004a524f",
+      "command": "open",
       "name": "Variant picker"
     }
   ],

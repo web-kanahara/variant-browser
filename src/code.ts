@@ -1,23 +1,15 @@
-type VariantProperties = Record<string, string>
+import type { PluginToUiMessage, UiToPluginMessage, VariantEntry, VariantProperties } from './shared/messages'
 
-type UiMessage =
-  | { type: 'choose'; id: string; properties: VariantProperties }
-  | { type: 'request-thumbnail'; id: string }
-  | { type: 'refresh' }
-  | { type: 'resize'; width: number; height: number }
-
-type VariantEntry = {
-  id: string
-  label: string
-  properties: VariantProperties
-  selected: boolean
-}
-
-const TOOL_ID = 'c0f24597-6cf3-431b-83aa-73cf004a524f'
+// manifest.json の relaunchButtons[].command と一致させる
+const RELAUNCH_COMMAND = 'open'
 const DISPLAY_NAME = 'Variant picker'
 const thumbnailCache = new Map<string, Uint8Array>()
 const visibleComponents = new Map<string, ComponentNode>()
 let refreshToken = 0
+
+function post(message: PluginToUiMessage): void {
+  figma.ui.postMessage(message)
+}
 
 function parseVariantName(name: string): VariantProperties {
   const properties: VariantProperties = {}
@@ -51,9 +43,9 @@ async function sendThumbnail(id: string): Promise<void> {
       })
       thumbnailCache.set(id, bytes)
     }
-    if (visibleComponents.has(id)) figma.ui.postMessage({ type: 'thumbnail', id, bytes })
+    if (visibleComponents.has(id)) post({ type: 'thumbnail', id, bytes })
   } catch {
-    if (visibleComponents.has(id)) figma.ui.postMessage({ type: 'thumbnail-error', id })
+    if (visibleComponents.has(id)) post({ type: 'thumbnail-error', id })
   }
 }
 
@@ -62,7 +54,7 @@ async function refresh(): Promise<void> {
   visibleComponents.clear()
   const selection = figma.currentPage.selection
   if (selection.length !== 1 || selection[0].type !== 'INSTANCE') {
-    figma.ui.postMessage({ type: 'empty', message: 'バリアントを持つインスタンスを1つ選択してください' })
+    post({ type: 'empty', message: 'バリアントを持つインスタンスを1つ選択してください' })
     return
   }
 
@@ -70,7 +62,7 @@ async function refresh(): Promise<void> {
   const main = await instance.getMainComponentAsync()
   if (token !== refreshToken) return
   if (!main || !main.parent || main.parent.type !== 'COMPONENT_SET') {
-    figma.ui.postMessage({ type: 'empty', message: 'バリアントを持つインスタンスを選択してください' })
+    post({ type: 'empty', message: 'バリアントを持つインスタンスを選択してください' })
     return
   }
 
@@ -101,7 +93,7 @@ async function refresh(): Promise<void> {
     })
     .filter((filter) => filter.values.length > 0)
 
-  figma.ui.postMessage({ type: 'variants', title: set.name, filters, entries, currentProperties })
+  post({ type: 'variants', title: set.name, filters, entries })
 }
 
 async function chooseVariant(id: string, properties: VariantProperties): Promise<void> {
@@ -109,8 +101,8 @@ async function chooseVariant(id: string, properties: VariantProperties): Promise
   if (selection.length !== 1 || selection[0].type !== 'INSTANCE') return
   try {
     selection[0].setProperties(properties)
-    selection[0].setRelaunchData({ [TOOL_ID]: DISPLAY_NAME })
-    figma.ui.postMessage({ type: 'selected', id })
+    selection[0].setRelaunchData({ [RELAUNCH_COMMAND]: DISPLAY_NAME })
+    post({ type: 'selected', id })
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     figma.notify(message, { error: true })
@@ -119,7 +111,7 @@ async function chooseVariant(id: string, properties: VariantProperties): Promise
 
 figma.showUI(__html__, { width: 360, height: 520, themeColors: true })
 figma.on('selectionchange', () => { void refresh() })
-figma.ui.onmessage = (message: UiMessage) => {
+figma.ui.onmessage = (message: UiToPluginMessage) => {
   if (message.type === 'choose') void chooseVariant(message.id, message.properties)
   if (message.type === 'request-thumbnail') void sendThumbnail(message.id)
   if (message.type === 'refresh') void refresh()

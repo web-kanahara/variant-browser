@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <!-- inline:css -->
+</head>
+<body>
+  <header>
+    <div class="heading"><h1 id="title">Variant picker</h1><div id="meta">選択を確認中…</div></div>
+    <div class="header-actions">
+      <div class="size-options" role="group" aria-label="サムネイルサイズ">
+        <button id="thumbnail-size-normal" class="icon-button" data-tooltip="標準サイズで表示" aria-label="標準サイズで表示" aria-pressed="true">
+          <!-- Material Symbols Rounded: apps -->
+          <svg viewBox="0 -960 960 960" aria-hidden="true"><path fill="currentColor" d="M240-160q-33 0-56.5-23.5T160-240q0-33 23.5-56.5T240-320q33 0 56.5 23.5T320-240q0 33-23.5 56.5T240-160Zm240 0q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm240 0q-33 0-56.5-23.5T640-240q0-33 23.5-56.5T720-320q33 0 56.5 23.5T800-240q0 33-23.5 56.5T720-160ZM240-400q-33 0-56.5-23.5T160-480q0-33 23.5-56.5T240-560q33 0 56.5 23.5T320-480q0 33-23.5 56.5T240-400Zm240 0q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm240 0q-33 0-56.5-23.5T640-480q0-33 23.5-56.5T720-560q33 0 56.5 23.5T800-480q0 33-23.5 56.5T720-400ZM240-640q-33 0-56.5-23.5T160-720q0-33 23.5-56.5T240-800q33 0 56.5 23.5T320-720q0 33-23.5 56.5T240-640Zm240 0q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Zm240 0q-33 0-56.5-23.5T640-720q0-33 23.5-56.5T720-800q33 0 56.5 23.5T800-720q0 33-23.5 56.5T720-640Z"/></svg>
+        </button>
+        <button id="thumbnail-size-large" class="icon-button" data-tooltip="大きいサイズで表示" aria-label="大きいサイズで表示" aria-pressed="false">
+          <!-- Material Symbols Rounded: grid_view (fill) -->
+          <svg viewBox="0 -960 960 960" aria-hidden="true"><path fill="currentColor" d="M200-520q-33 0-56.5-23.5T120-600v-160q0-33 23.5-56.5T200-840h160q33 0 56.5 23.5T440-760v160q0 33-23.5 56.5T360-520H200Zm0 400q-33 0-56.5-23.5T120-200v-160q0-33 23.5-56.5T200-440h160q33 0 56.5 23.5T440-360v160q0 33-23.5 56.5T360-120H200Zm400-400q-33 0-56.5-23.5T520-600v-160q0-33 23.5-56.5T600-840h160q33 0 56.5 23.5T840-760v160q0 33-23.5 56.5T760-520H600Zm0 400q-33 0-56.5-23.5T520-200v-160q0-33 23.5-56.5T600-440h160q33 0 56.5 23.5T840-360v160q0 33-23.5 56.5T760-120H600Z"/></svg>
+        </button>
+      </div>
+      <button id="refresh" class="icon-button" data-tooltip="バリアントを再読み込み" aria-label="バリアントを再読み込み">
+        <!-- Material Symbols Rounded: refresh -->
+        <svg viewBox="0 -960 960 960" aria-hidden="true"><path fill="currentColor" d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 132 28.5T720-690v-70q0-17 11.5-28.5T760-800q17 0 28.5 11.5T800-760v200q0 17-11.5 28.5T760-520H560q-17 0-28.5-11.5T520-560q0-17 11.5-28.5T560-600h128q-32-56-87.5-88T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q68 0 124.5-34.5T692-367q8-14 22.5-19.5t29.5-.5q16 5 23 21t-1 30q-41 80-117 128t-169 48Z"/></svg>
+      </button>
+    </div>
+  </header>
+  <section id="filters"></section>
+  <main id="content"><div id="grid"></div><div id="empty"></div></main>
+  <div id="resize-handle" data-tooltip="ウインドウサイズを変更" aria-label="ウインドウサイズを変更"></div>
+  <div id="tooltip" role="tooltip" hidden></div>
+  <!-- inline:js -->
+</body>
+</html>
