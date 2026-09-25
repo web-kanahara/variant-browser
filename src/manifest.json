@@ -1,0 +1,22 @@
+{
+  "name": "Variant picker",
+  "id": "c0f24597-6cf3-431b-83aa-73cf004a524f",
+  "api": "1.0.0",
+  "main": "code.js",
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": [
+      "none"
+    ]
+  },
+  "editorType": [
+    "figma"
+  ],
+  "relaunchButtons": [
+    {
+      "command": "c0f24597-6cf3-431b-83aa-73cf004a524f",
+      "name": "Variant picker"
+    }
+  ],
+  "ui": "ui.html"
+}

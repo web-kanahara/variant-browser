@@ -1,0 +1,11 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+
+# macOS
+.DS_Store
+
+# npm logs
+npm-debug.log*

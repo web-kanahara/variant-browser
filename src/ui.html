@@ -1,0 +1,263 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script>
+    try { window.localStorage.getItem('x') } catch (e) {
+      const store = new Map()
+      Object.defineProperty(window, 'localStorage', { value: {
+        getItem: (key) => store.has(key) ? store.get(key) : null,
+        setItem: (key, value) => store.set(key, String(value)),
+        removeItem: (key) => store.delete(key), clear: () => store.clear(),
+        key: (index) => Array.from(store.keys())[index] ?? null,
+        get length() { return store.size },
+      }, configurable: true })
+    }
+  </script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #fff;
+      --bg-raised: #fff;
+      --gray-100: #f2f2f2;
+      --gray-200: #ebebeb;
+      --gray-300: #e6e6e6;
+      --gray-500: #c2c2c2;
+      --gray-700: #8f8f8f;
+      --gray-900: #3d3d3d;
+      --fg: #1a1a1a;
+      --contrast: #000;
+      --blue: #0070f3;
+      --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--contrast);
+      --shadow: 0 1px 2px rgba(0,0,0,.04);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000;
+        --bg-raised: #0a0a0a;
+        --gray-100: #1a1a1a;
+        --gray-200: #242424;
+        --gray-300: #2e2e2e;
+        --gray-500: #555;
+        --gray-700: #8f8f8f;
+        --gray-900: #d4d4d4;
+        --fg: #ededed;
+        --contrast: #fff;
+        --blue: #3291ff;
+        --shadow: 0 1px 2px rgba(0,0,0,.45);
+      }
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font: 13px/1.45 -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text', 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic UI', sans-serif; }
+    body { display: flex; flex-direction: column; letter-spacing: -.01em; }
+    button, select { font: inherit; }
+    button:focus-visible, select:focus-visible { outline: none; box-shadow: var(--focus) !important; }
+    header { height: 56px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--gray-200); background: var(--bg-raised); flex: none; }
+    .heading { min-width: 0; }
+    h1 { margin: 0; font-size: 14px; line-height: 20px; font-weight: 600; letter-spacing: -.015em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #meta { margin-top: 1px; color: var(--gray-700); font-size: 11px; line-height: 16px; }
+    .header-actions, .size-options { display: flex; align-items: center; }
+    .header-actions { gap: 8px; flex: none; }
+    .size-options { gap: 1px; padding: 2px; border-radius: 8px; background: var(--gray-100); box-shadow: inset 0 0 0 1px var(--gray-200); }
+    .icon-button { position: relative; width: 32px; height: 32px; display: block; padding: 0; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--gray-900); cursor: pointer; transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease; }
+    .icon-button[data-tooltip]::after { content: attr(data-tooltip); position: absolute; z-index: 1000; top: calc(100% + 8px); left: 50%; width: max-content; max-width: 180px; padding: 5px 8px; border: 1px solid var(--gray-900); border-radius: 6px; background: var(--contrast); color: var(--bg); font-size: 11px; font-weight: 500; line-height: 14px; white-space: nowrap; pointer-events: none; opacity: 0; visibility: hidden; transform: translate(-50%, -2px); transition: opacity .12s ease .3s, transform .12s ease .3s, visibility 0s linear .42s; box-shadow: 0 4px 12px rgba(0,0,0,.16); }
+    .icon-button[data-tooltip]:hover::after, .icon-button[data-tooltip]:focus-visible::after { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition-delay: .3s; }
+    .icon-button:hover { background: var(--gray-200); color: var(--contrast); }
+    .icon-button:active { background: var(--gray-300); }
+    .icon-button[aria-pressed="true"] { border-color: var(--gray-200); background: var(--bg-raised); color: var(--contrast); box-shadow: var(--shadow); }
+    .icon-button > svg { position: absolute; top: 50%; left: 50%; width: 16px; height: 16px; display: block; transform: translate(-50%, -50%); }
+    #refresh { border-color: var(--gray-200); background: var(--bg-raised); box-shadow: var(--shadow); }
+    #refresh svg { width: 16px; height: 16px; transform: translate(-50%, -50%); }
+    #refresh::after { right: 0; left: auto; transform: translateY(-2px); }
+    #refresh:hover::after, #refresh:focus-visible::after { transform: translateY(0); }
+    #filters { display: none; flex: none; max-height: 304px; overflow: auto; padding: 0 16px; border-bottom: 1px solid var(--gray-200); background: var(--bg-raised); }
+    .filter-heading { display: flex; align-items: center; height: 44px; }
+    .filter-toggle { height: 32px; display: flex; align-items: center; gap: 9px; margin-left: -8px; padding: 0 8px; border: 0 !important; border-radius: 6px; background: transparent !important; color: var(--gray-900) !important; font-weight: 500; cursor: pointer; outline: none !important; box-shadow: none !important; transition: background .15s ease, color .15s ease; }
+    .filter-toggle:hover { background: var(--gray-100) !important; color: var(--contrast) !important; }
+    .filter-toggle:active { background: var(--gray-200) !important; }
+    .filter-toggle:focus-visible { box-shadow: var(--focus) !important; }
+    .filter-toggle-arrow { width: 6px; height: 6px; border-right: 1.25px solid currentColor; border-bottom: 1.25px solid currentColor; transform: translateY(-25%) rotate(45deg); transition: transform .15s ease; }
+    #filters[data-open="true"] .filter-toggle-arrow { transform: translateY(25%) rotate(225deg); }
+    .filter-fields { display: none; padding: 0 0 16px; }
+    #filters[data-open="true"] .filter-fields { display: block; }
+    .filter-row { display: grid; grid-template-columns: 72px 168px auto; gap: 10px; align-items: center; width: max-content; min-height: 36px; margin-top: 8px; }
+    .filter-name { overflow: hidden; color: var(--gray-700); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+    .select-wrap { position: relative; width: 168px; }
+    .select-wrap::after { content: ''; position: absolute; right: 13px; top: 50%; width: 6px; height: 6px; border-right: 1.25px solid var(--gray-900); border-bottom: 1.25px solid var(--gray-900); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
+    .filter-select { appearance: none !important; -webkit-appearance: none !important; display: block !important; box-sizing: border-box !important; width: 168px !important; min-height: 36px !important; height: 36px !important; line-height: 18px !important; padding: 8px 36px 8px 12px !important; border: 1px solid var(--gray-300) !important; border-radius: 6px !important; background-color: var(--bg-raised) !important; background-image: none !important; color: var(--fg) !important; font-family: inherit !important; font-size: 13px !important; cursor: pointer; outline: none; box-shadow: var(--shadow); transition: border-color .15s ease, box-shadow .15s ease; }
+    .filter-select:hover { border-color: var(--gray-500) !important; }
+    .filter-select:focus { border-color: var(--contrast) !important; }
+    .row-clear { height: 32px; padding: 0 10px; border: 1px solid var(--gray-200); border-radius: 6px; background: var(--bg-raised); color: var(--gray-900); font-size: 12px; cursor: pointer; box-shadow: var(--shadow); transition: background .15s ease, border-color .15s ease, color .15s ease; }
+    .row-clear:hover { border-color: var(--gray-500); background: var(--gray-100); color: var(--contrast); }
+    .row-clear:active { background: var(--gray-200); }
+    #content { flex: 1; min-height: 0; overflow: auto; padding: 16px 18px 18px 16px; background: var(--bg); }
+    #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 10px; }
+    .item { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; min-width: 0; height: 86px; overflow: hidden; padding: 8px 6px 7px; border: 1px solid var(--gray-200); border-radius: 8px; background: var(--bg-raised); color: var(--gray-900); cursor: pointer; text-align: center; box-shadow: var(--shadow); transition: border-color .15s ease, background .15s ease, color .15s ease, transform .15s ease, box-shadow .15s ease; }
+    .item:hover { border-color: var(--gray-500); background: var(--gray-100); color: var(--contrast); transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,.08); }
+    .item:active { transform: translateY(0); }
+    .item.selected { padding: 7px 5px 6px; border: 2px solid var(--contrast); background: var(--bg-raised); color: var(--contrast); }
+    .thumb { flex: none; width: 48px; height: 48px; margin: 0 auto 6px; display: grid; place-items: center; overflow: hidden; border-radius: 6px; background: var(--gray-100); }
+    .thumb img { display: block; width: 100%; height: 100%; padding: 8px; object-fit: contain; }
+    .placeholder { width: 16px; height: 16px; border: 2px solid var(--gray-300); border-top-color: var(--gray-900); border-radius: 50%; animation: spin .8s linear infinite; }
+    .label { display: block; width: 100%; overflow: hidden; font-size: 10px; line-height: 14px; text-overflow: ellipsis; white-space: nowrap; }
+    body.large-thumbnails #grid { grid-template-columns: repeat(auto-fill, minmax(162px, 1fr)); }
+    body.large-thumbnails .item { height: 182px; padding: 14px 10px 10px; }
+    body.large-thumbnails .item.selected { padding: 13px 9px 9px; }
+    body.large-thumbnails .thumb { width: 124px; height: 124px; margin-bottom: 10px; border-radius: 8px; }
+    body.large-thumbnails .thumb img { padding: 20px; }
+    body.large-thumbnails .label { font-size: 12px; line-height: 16px; }
+    #empty { height: 100%; display: none; place-items: center; padding: 40px; color: var(--gray-700); text-align: center; }
+    #resize-handle { position: fixed; right: 0; bottom: 0; width: 18px; height: 18px; cursor: nwse-resize; touch-action: none; }
+    #resize-handle::after { content: ''; position: absolute; right: 4px; bottom: 4px; width: 7px; height: 7px; border-right: 1px solid var(--gray-500); border-bottom: 1px solid var(--gray-500); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="heading"><h1 id="title">Variant picker</h1><div id="meta">選択を確認中…</div></div>
+    <div class="header-actions">
+      <div class="size-options" role="group" aria-label="サムネイルサイズ">
+        <button id="thumbnail-size-normal" class="icon-button" data-tooltip="標準サイズで表示" aria-label="標準サイズで表示" aria-pressed="true">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2h3v3H2V2Zm4.5 0h3v3h-3V2ZM11 2h3v3h-3V2ZM2 6.5h3v3H2v-3Zm4.5 0h3v3h-3v-3Zm4.5 0h3v3h-3v-3ZM2 11h3v3H2v-3Zm4.5 0h3v3h-3v-3Zm4.5 0h3v3h-3v-3Z"/></svg>
+        </button>
+        <button id="thumbnail-size-large" class="icon-button" data-tooltip="大きいサイズで表示" aria-label="大きいサイズで表示" aria-pressed="false">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M2 2h5v5H2V2Zm7 0h5v5H9V2ZM2 9h5v5H2V9Zm7 0h5v5H9V9Z"/></svg>
+        </button>
+      </div>
+      <button id="refresh" class="icon-button" data-tooltip="バリアントを再読み込み" aria-label="バリアントを再読み込み">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M12 3a9 9 0 0 1 6.36 2.64L21 3v7h-7l2.93-2.93A7 7 0 0 0 5.08 11H3.06A9 9 0 0 1 12 3Zm8.94 10A9 9 0 0 1 5.64 18.36L3 21v-7h7l-2.93 2.93A7 7 0 0 0 18.92 13h2.02Z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+  <section id="filters"></section>
+  <main id="content"><div id="grid"></div><div id="empty"></div></main>
+  <div id="resize-handle" title="ウインドウサイズを変更" aria-label="ウインドウサイズを変更"></div>
+  <script>
+    const grid = document.getElementById('grid')
+    const content = document.getElementById('content')
+    const filtersElement = document.getElementById('filters')
+    const empty = document.getElementById('empty')
+    const title = document.getElementById('title')
+    const meta = document.getElementById('meta')
+    const imageUrls = new Map()
+    const elementsById = new Map()
+    const entriesById = new Map()
+    const selectedFilters = new Map()
+    let entries = []
+    let filters = []
+
+    function post(message) { parent.postMessage({ pluginMessage: message }, '*') }
+    function clearImages() { imageUrls.forEach((url) => URL.revokeObjectURL(url)); imageUrls.clear() }
+    function selectId(id) { elementsById.forEach((element, key) => element.classList.toggle('selected', key === id)) }
+
+    const observer = new IntersectionObserver((observed) => {
+      for (const item of observed) {
+        if (!item.isIntersecting || item.target.dataset.loaded === 'true') continue
+        item.target.dataset.loaded = 'true'
+        post({ type: 'request-thumbnail', id: item.target.dataset.id })
+      }
+    }, { root: content, rootMargin: '120px' })
+
+    function applyFilters() {
+      let visibleCount = 0
+      for (const entry of entries) {
+        const visible = filters.every((filter) => {
+          const selected = selectedFilters.get(filter.name)
+          return !selected || entry.properties[filter.name] === selected
+        })
+        const element = elementsById.get(entry.id)
+        element.hidden = !visible
+        if (visible) { visibleCount += 1; observer.observe(element) } else observer.unobserve(element)
+      }
+      meta.textContent = visibleCount === entries.length ? entries.length + ' variants' : visibleCount + ' / ' + entries.length + ' variants'
+    }
+
+    function renderFilters(currentProperties) {
+      filtersElement.replaceChildren()
+      filtersElement.style.display = filters.length ? 'block' : 'none'
+      if (!filters.length) return
+      filtersElement.dataset.open = 'false'
+      const heading = document.createElement('div'); heading.className = 'filter-heading'
+      const toggle = document.createElement('button'); toggle.className = 'filter-toggle'; toggle.setAttribute('aria-expanded', 'false')
+      const headingText = document.createElement('span'); headingText.textContent = 'フィルター'
+      const headingArrow = document.createElement('span'); headingArrow.className = 'filter-toggle-arrow'; headingArrow.setAttribute('aria-hidden', 'true')
+      toggle.append(headingText, headingArrow)
+      toggle.addEventListener('click', () => { const open = filtersElement.dataset.open !== 'true'; filtersElement.dataset.open = String(open); toggle.setAttribute('aria-expanded', String(open)) })
+      heading.appendChild(toggle)
+      const fields = document.createElement('div'); fields.className = 'filter-fields'
+      filtersElement.append(heading, fields)
+
+      for (const filter of filters) {
+        const row = document.createElement('div'); row.className = 'filter-row'
+        const name = document.createElement('div'); name.className = 'filter-name'; name.textContent = filter.name; name.title = filter.name
+        const select = document.createElement('select'); select.className = 'filter-select'; select.setAttribute('aria-label', filter.name)
+        const all = document.createElement('option'); all.value = ''; all.textContent = 'すべて'; select.appendChild(all)
+        for (const value of filter.values) {
+          const option = document.createElement('option'); option.value = value; option.textContent = value; select.appendChild(option)
+        }
+        const currentValue = currentProperties[filter.name]
+        if (currentValue && filter.values.includes(currentValue)) {
+          select.value = currentValue
+          selectedFilters.set(filter.name, currentValue)
+        }
+        const selectWrap = document.createElement('div'); selectWrap.className = 'select-wrap'; selectWrap.appendChild(select)
+        const clear = document.createElement('button'); clear.className = 'row-clear'; clear.textContent = 'クリア'; clear.title = filter.name + 'をすべてに戻す'
+        clear.hidden = !select.value
+        select.addEventListener('change', () => { if (select.value) selectedFilters.set(filter.name, select.value); else selectedFilters.delete(filter.name); clear.hidden = !select.value; applyFilters() })
+        clear.addEventListener('click', () => { select.value = ''; selectedFilters.delete(filter.name); clear.hidden = true; applyFilters(); select.focus() })
+        row.append(name, selectWrap, clear)
+        fields.appendChild(row)
+      }
+    }
+
+    function renderVariants(message) {
+      clearImages(); observer.disconnect(); grid.replaceChildren(); elementsById.clear(); entriesById.clear(); selectedFilters.clear()
+      entries = message.entries; filters = message.filters
+      title.textContent = message.title; empty.style.display = 'none'; grid.style.display = 'grid'
+      renderFilters(message.currentProperties ?? {})
+      for (const entry of entries) {
+        entriesById.set(entry.id, entry)
+        const button = document.createElement('button'); button.className = 'item' + (entry.selected ? ' selected' : '')
+        button.dataset.id = entry.id; button.title = Object.entries(entry.properties).map(([key, value]) => key + ': ' + value).join('\n')
+        const thumb = document.createElement('div'); thumb.className = 'thumb'; const loader = document.createElement('div'); loader.className = 'placeholder'; thumb.appendChild(loader)
+        const label = document.createElement('div'); label.className = 'label'; label.textContent = entry.label
+        button.append(thumb, label); button.addEventListener('click', () => { selectId(entry.id); post({ type: 'choose', id: entry.id, properties: entry.properties }) })
+        grid.appendChild(button); elementsById.set(entry.id, button)
+      }
+      applyFilters()
+      grid.querySelector('.selected')?.scrollIntoView({ block: 'nearest' })
+    }
+
+    const normalButton = document.getElementById('thumbnail-size-normal')
+    const largeButton = document.getElementById('thumbnail-size-large')
+    function setLarge(enabled) { document.body.classList.toggle('large-thumbnails', enabled); normalButton.setAttribute('aria-pressed', String(!enabled)); largeButton.setAttribute('aria-pressed', String(enabled)); localStorage.setItem('large-thumbnails', String(enabled)) }
+    setLarge(localStorage.getItem('large-thumbnails') === 'true')
+    normalButton.addEventListener('click', () => setLarge(false)); largeButton.addEventListener('click', () => setLarge(true))
+    document.getElementById('refresh').addEventListener('click', () => post({ type: 'refresh' }))
+
+    const resizeHandle = document.getElementById('resize-handle'); let resizeStart = null
+    resizeHandle.addEventListener('pointerdown', (event) => { resizeStart = { x: event.clientX, y: event.clientY, width: innerWidth, height: innerHeight }; resizeHandle.setPointerCapture(event.pointerId); event.preventDefault() })
+    resizeHandle.addEventListener('pointermove', (event) => { if (resizeStart) post({ type: 'resize', width: resizeStart.width + event.clientX - resizeStart.x, height: resizeStart.height + event.clientY - resizeStart.y }) })
+    resizeHandle.addEventListener('pointerup', (event) => { resizeStart = null; resizeHandle.releasePointerCapture(event.pointerId) })
+
+    window.addEventListener('message', (event) => {
+      const message = event.data && event.data.pluginMessage
+      if (!message) return
+      if (message.type === 'empty') {
+        clearImages(); observer.disconnect(); grid.replaceChildren(); filtersElement.replaceChildren(); filtersElement.style.display = 'none'; grid.style.display = 'none'
+        empty.textContent = message.message; empty.style.display = 'grid'; title.textContent = 'Variant picker'; meta.textContent = 'インスタンスを選択'
+      } else if (message.type === 'variants') renderVariants(message)
+      else if (message.type === 'thumbnail') {
+        const item = elementsById.get(message.id); if (!item) return
+        const previous = imageUrls.get(message.id); if (previous) URL.revokeObjectURL(previous)
+        const url = URL.createObjectURL(new Blob([message.bytes], { type: 'image/png' })); imageUrls.set(message.id, url)
+        const image = document.createElement('img'); image.src = url; image.alt = ''; item.querySelector('.thumb').replaceChildren(image)
+      } else if (message.type === 'thumbnail-error') { const item = elementsById.get(message.id); if (item) item.querySelector('.thumb').textContent = '—' }
+      else if (message.type === 'selected') selectId(message.id)
+    })
+  </script>
+</body>
+</html>
