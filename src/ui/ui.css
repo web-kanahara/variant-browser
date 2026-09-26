@@ -1,5 +1,6 @@
+/* 配色は Figma のテーマに合わせる（themeColors: true で <html> に figma-light / figma-dark が付く） */
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   --bg: #fff;
   --bg-raised: #fff;
   --gray-100: #f2f2f2;
@@ -14,21 +15,20 @@
   --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--contrast);
   --shadow: 0 1px 2px rgba(0,0,0,.04);
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #000;
-    --bg-raised: #0a0a0a;
-    --gray-100: #1a1a1a;
-    --gray-200: #242424;
-    --gray-300: #2e2e2e;
-    --gray-500: #555;
-    --gray-700: #8f8f8f;
-    --gray-900: #d4d4d4;
-    --fg: #ededed;
-    --contrast: #fff;
-    --blue: #3291ff;
-    --shadow: 0 1px 2px rgba(0,0,0,.45);
-  }
+:root.figma-dark {
+  color-scheme: dark;
+  --bg: #000;
+  --bg-raised: #0a0a0a;
+  --gray-100: #1a1a1a;
+  --gray-200: #242424;
+  --gray-300: #2e2e2e;
+  --gray-500: #555;
+  --gray-700: #8f8f8f;
+  --gray-900: #d4d4d4;
+  --fg: #ededed;
+  --contrast: #fff;
+  --blue: #3291ff;
+  --shadow: 0 1px 2px rgba(0,0,0,.45);
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }

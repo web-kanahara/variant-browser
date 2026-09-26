@@ -19,7 +19,7 @@ It works with any instance whose main component belongs to a component set — n
 - Japanese / English UI (follows your OS language until you choose one)
 - Remembers the thumbnail size and language for next time
 - Resizable plugin window
-- Follows the system light / dark theme
+- Follows Figma's light / dark theme
 
 ## Usage
 
