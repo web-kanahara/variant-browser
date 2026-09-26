@@ -1,19 +1,6 @@
 import './ui.css'
-import type { PluginToUiMessage, UiToPluginMessage, VariantEntry, VariantFilter } from '../shared/messages'
-
-// Figmaのプラグイン画面ではlocalStorageが使えない場合があるため、メモリ上の代替に差し替える
-try { window.localStorage.getItem('x') } catch {
-  const store = new Map<string, string>()
-  const memoryStorage: Storage = {
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => { store.set(key, String(value)) },
-    removeItem: (key) => { store.delete(key) },
-    clear: () => store.clear(),
-    key: (index) => Array.from(store.keys())[index] ?? null,
-    get length() { return store.size },
-  }
-  Object.defineProperty(window, 'localStorage', { value: memoryStorage, configurable: true })
-}
+import type { Language, PluginToUiMessage, Settings, UiToPluginMessage, VariantEntry, VariantFilter } from '../shared/messages'
+import { detectLanguage, getLanguage, setLanguage, setText, setTooltip } from './i18n'
 
 // Material Symbols Rounded: expand_more
 const ICON_EXPAND_MORE = '<svg viewBox="0 -960 960 960" aria-hidden="true"><path fill="currentColor" d="M480-362q-8 0-15-2.5t-13-8.5L268-557q-11-11-11-28t11-28q11-11 28-11t28 11l156 156 156-156q11-11 28-11t28 11q11 11 11 28t-11 28L508-373q-6 6-13 8.5t-15 2.5Z"/></svg>'
@@ -40,6 +27,7 @@ let entries: VariantEntry[] = []
 let filters: VariantFilter[] = []
 
 function post(message: UiToPluginMessage): void { parent.postMessage({ pluginMessage: message }, '*') }
+function saveSettings(settings: Partial<Settings>): void { post({ type: 'save-settings', settings }) }
 function clearImages(): void { imageUrls.forEach((url) => URL.revokeObjectURL(url)); imageUrls.clear() }
 function selectId(id: string): void { elementsById.forEach((element, key) => element.classList.toggle('selected', key === id)) }
 
@@ -64,7 +52,8 @@ function applyFilters(): void {
     element.hidden = !visible
     if (visible) { visibleCount += 1; observer.observe(element) } else observer.unobserve(element)
   }
-  meta.textContent = visibleCount === entries.length ? entries.length + ' variants' : visibleCount + ' / ' + entries.length + ' variants'
+  if (visibleCount === entries.length) setText(meta, 'variantCount', { count: entries.length })
+  else setText(meta, 'variantCountFiltered', { visible: visibleCount, count: entries.length })
 }
 
 function renderFilters(): void {
@@ -74,7 +63,7 @@ function renderFilters(): void {
   filtersElement.dataset.open = 'false'
   const heading = document.createElement('div'); heading.className = 'filter-heading'
   const toggle = document.createElement('button'); toggle.className = 'filter-toggle'; toggle.setAttribute('aria-expanded', 'false')
-  const headingText = document.createElement('span'); headingText.textContent = 'フィルター'
+  const headingText = document.createElement('span'); setText(headingText, 'filters')
   toggle.append(headingText, createIcon(ICON_EXPAND_MORE, 'filter-toggle-icon'))
   toggle.addEventListener('click', () => { const open = filtersElement.dataset.open !== 'true'; filtersElement.dataset.open = String(open); toggle.setAttribute('aria-expanded', String(open)) })
   heading.appendChild(toggle)
@@ -85,12 +74,12 @@ function renderFilters(): void {
     const row = document.createElement('div'); row.className = 'filter-row'
     const name = document.createElement('div'); name.className = 'filter-name'; name.textContent = filter.name; name.dataset.tooltip = filter.name
     const select = document.createElement('select'); select.className = 'filter-select'; select.setAttribute('aria-label', filter.name)
-    const all = document.createElement('option'); all.value = ''; all.textContent = 'すべて'; select.appendChild(all)
+    const all = document.createElement('option'); all.value = ''; setText(all, 'all'); select.appendChild(all)
     for (const value of filter.values) {
       const option = document.createElement('option'); option.value = value; option.textContent = value; select.appendChild(option)
     }
     const selectWrap = document.createElement('div'); selectWrap.className = 'select-wrap'; selectWrap.append(select, createIcon(ICON_EXPAND_MORE, 'select-icon'))
-    const clear = document.createElement('button'); clear.className = 'row-clear'; clear.textContent = 'クリア'; clear.dataset.tooltip = filter.name + 'をすべてに戻す'
+    const clear = document.createElement('button'); clear.className = 'row-clear'; setText(clear, 'clear'); setTooltip(clear, 'clearFilter', { name: filter.name })
     clear.hidden = !select.value
     select.addEventListener('change', () => { if (select.value) selectedFilters.set(filter.name, select.value); else selectedFilters.delete(filter.name); clear.hidden = !select.value; applyFilters(); scrollSelectedToTop() })
     clear.addEventListener('click', () => { select.value = ''; selectedFilters.delete(filter.name); clear.hidden = true; applyFilters(); scrollSelectedToTop(); select.focus() })
@@ -165,7 +154,7 @@ function tooltipTargetOf(event: Event): HTMLElement | null {
   return event.target instanceof Element ? event.target.closest<HTMLElement>('[data-tooltip]') : null
 }
 
-document.addEventListener('pointerover', (event) => { const target = tooltipTargetOf(event); if (target) scheduleTooltip(target); else hideTooltip() })
+document.addEventListener('pointerover', (event) => { const target = tooltipTargetOf(event); if (target && languageMenu.hidden) scheduleTooltip(target); else hideTooltip() })
 document.documentElement.addEventListener('pointerleave', hideTooltip)
 document.addEventListener('pointerdown', hideTooltip)
 document.addEventListener('focusin', (event) => { const target = tooltipTargetOf(event); if (target?.matches(':focus-visible')) scheduleTooltip(target) })
@@ -175,10 +164,52 @@ document.addEventListener('keydown', (event) => { if (event.key === 'Escape') hi
 
 const normalButton = document.getElementById('thumbnail-size-normal') as HTMLButtonElement
 const largeButton = document.getElementById('thumbnail-size-large') as HTMLButtonElement
-function setLarge(enabled: boolean): void { document.body.classList.toggle('large-thumbnails', enabled); normalButton.setAttribute('aria-pressed', String(!enabled)); largeButton.setAttribute('aria-pressed', String(enabled)); localStorage.setItem('large-thumbnails', String(enabled)) }
-setLarge(localStorage.getItem('large-thumbnails') === 'true')
-normalButton.addEventListener('click', () => setLarge(false)); largeButton.addEventListener('click', () => setLarge(true))
+function setLarge(enabled: boolean): void { document.body.classList.toggle('large-thumbnails', enabled); normalButton.setAttribute('aria-pressed', String(!enabled)); largeButton.setAttribute('aria-pressed', String(enabled)) }
+normalButton.addEventListener('click', () => { setLarge(false); saveSettings({ largeThumbnails: false }) })
+largeButton.addEventListener('click', () => { setLarge(true); saveSettings({ largeThumbnails: true }) })
 document.getElementById('refresh')?.addEventListener('click', () => post({ type: 'refresh' }))
+
+const languageAnchor = document.getElementById('language-anchor') as HTMLDivElement
+const languageButton = document.getElementById('language') as HTMLButtonElement
+const languageMenu = document.getElementById('language-menu') as HTMLDivElement
+const languageItems = Array.from(languageMenu.querySelectorAll<HTMLButtonElement>('[data-language]'))
+
+function applyLanguage(language: Language): void {
+  setLanguage(language)
+  languageItems.forEach((item) => item.setAttribute('aria-checked', String(item.dataset.language === language)))
+}
+
+function openLanguageMenu(): void {
+  hideTooltip()
+  languageMenu.hidden = false
+  languageButton.setAttribute('aria-expanded', 'true')
+  languageItems.find((item) => item.dataset.language === getLanguage())?.focus()
+}
+
+function closeLanguageMenu(returnFocus = false): void {
+  if (languageMenu.hidden) return
+  languageMenu.hidden = true
+  languageButton.setAttribute('aria-expanded', 'false')
+  if (returnFocus) languageButton.focus()
+}
+
+languageButton.addEventListener('click', () => { if (languageMenu.hidden) openLanguageMenu(); else closeLanguageMenu() })
+languageItems.forEach((item) => item.addEventListener('click', () => {
+  const language = item.dataset.language as Language
+  applyLanguage(language)
+  saveSettings({ language })
+  closeLanguageMenu(true)
+}))
+languageMenu.addEventListener('keydown', (event) => {
+  if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+  event.preventDefault()
+  const index = languageItems.indexOf(document.activeElement as HTMLButtonElement)
+  const next = (index + (event.key === 'ArrowDown' ? 1 : languageItems.length - 1)) % languageItems.length
+  languageItems[next].focus()
+})
+document.addEventListener('pointerdown', (event) => { if (!(event.target instanceof Node) || !languageAnchor.contains(event.target)) closeLanguageMenu() })
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeLanguageMenu(true) })
+applyLanguage(detectLanguage())
 
 const resizeHandle = document.getElementById('resize-handle') as HTMLDivElement; let resizeStart: { x: number; y: number; width: number; height: number } | null = null
 resizeHandle.addEventListener('pointerdown', (event) => { resizeStart = { x: event.clientX, y: event.clientY, width: innerWidth, height: innerHeight }; resizeHandle.setPointerCapture(event.pointerId); event.preventDefault() })
@@ -188,9 +219,12 @@ resizeHandle.addEventListener('pointerup', (event) => { resizeStart = null; resi
 window.addEventListener('message', (event: MessageEvent<{ pluginMessage?: PluginToUiMessage } | undefined>) => {
   const message = event.data && event.data.pluginMessage
   if (!message) return
-  if (message.type === 'empty') {
+  if (message.type === 'settings') {
+    applyLanguage(message.settings.language ?? detectLanguage())
+    setLarge(message.settings.largeThumbnails)
+  } else if (message.type === 'empty') {
     hideTooltip(); clearImages(); observer.disconnect(); grid.replaceChildren(); filtersElement.replaceChildren(); filtersElement.style.display = 'none'; grid.style.display = 'none'
-    empty.textContent = message.message; empty.style.display = 'grid'; title.textContent = 'Variant picker'; meta.textContent = 'インスタンスを選択'
+    setText(empty, message.reason === 'no-selection' ? 'noSelection' : 'noVariants'); empty.style.display = 'grid'; title.textContent = 'Variant picker'; setText(meta, 'selectInstance')
   } else if (message.type === 'variants') renderVariants(message)
   else if (message.type === 'thumbnail') {
     const item = elementsById.get(message.id); if (!item) return

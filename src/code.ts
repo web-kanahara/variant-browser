@@ -1,14 +1,34 @@
-import type { PluginToUiMessage, UiToPluginMessage, VariantEntry, VariantProperties } from './shared/messages'
+import type { PluginToUiMessage, Settings, UiToPluginMessage, VariantEntry, VariantProperties } from './shared/messages'
 
 // manifest.json の relaunchButtons[].command と一致させる
 const RELAUNCH_COMMAND = 'open'
 const DISPLAY_NAME = 'Variant picker'
+const SETTINGS_KEY = 'settings'
 const thumbnailCache = new Map<string, Uint8Array>()
 const visibleComponents = new Map<string, ComponentNode>()
 let refreshToken = 0
+let settings: Settings = { language: null, largeThumbnails: false }
 
 function post(message: PluginToUiMessage): void {
   figma.ui.postMessage(message)
+}
+
+async function loadSettings(): Promise<Settings> {
+  const stored: unknown = await figma.clientStorage.getAsync(SETTINGS_KEY)
+  const value = (stored && typeof stored === 'object' ? stored : {}) as Partial<Settings>
+  return {
+    language: value.language === 'ja' || value.language === 'en' ? value.language : null,
+    largeThumbnails: value.largeThumbnails === true,
+  }
+}
+
+async function saveSettings(changes: Partial<Settings>): Promise<void> {
+  settings = { ...settings, ...changes }
+  try {
+    await figma.clientStorage.setAsync(SETTINGS_KEY, settings)
+  } catch {
+    // 保存できなくても今回の表示には影響しないので無視する
+  }
 }
 
 function parseVariantName(name: string): VariantProperties {
@@ -54,7 +74,7 @@ async function refresh(): Promise<void> {
   visibleComponents.clear()
   const selection = figma.currentPage.selection
   if (selection.length !== 1 || selection[0].type !== 'INSTANCE') {
-    post({ type: 'empty', message: 'バリアントを持つインスタンスを1つ選択してください' })
+    post({ type: 'empty', reason: 'no-selection' })
     return
   }
 
@@ -62,7 +82,7 @@ async function refresh(): Promise<void> {
   const main = await instance.getMainComponentAsync()
   if (token !== refreshToken) return
   if (!main || !main.parent || main.parent.type !== 'COMPONENT_SET') {
-    post({ type: 'empty', message: 'バリアントを持つインスタンスを選択してください' })
+    post({ type: 'empty', reason: 'no-variants' })
     return
   }
 
@@ -115,10 +135,21 @@ figma.ui.onmessage = (message: UiToPluginMessage) => {
   if (message.type === 'choose') void chooseVariant(message.id, message.properties)
   if (message.type === 'request-thumbnail') void sendThumbnail(message.id)
   if (message.type === 'refresh') void refresh()
+  if (message.type === 'save-settings') void saveSettings(message.settings)
   if (message.type === 'resize') {
     const width = Math.max(280, Math.min(900, Math.round(message.width)))
     const height = Math.max(320, Math.min(900, Math.round(message.height)))
     figma.ui.resize(width, height)
   }
 }
-void refresh()
+
+async function start(): Promise<void> {
+  try {
+    settings = await loadSettings()
+  } catch {
+    // 読み込めなくても初期値のまま続ける
+  }
+  post({ type: 'settings', settings })
+  await refresh()
+}
+void start()

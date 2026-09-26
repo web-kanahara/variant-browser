@@ -1,99 +1,109 @@
 # Variant picker
 
-Figmaのコンポーネントバリアントを、サムネイルで確認しながら切り替えるためのプラグインです。
+English | [日本語](README.ja.md)
 
-アイコンだけでなく、ボタン、モーダル、フォームなど、コンポーネントセットとして管理されているインスタンスに対応します。
+A Figma plugin for switching component variants while previewing them as thumbnails.
 
-## 主な機能
+It works with any instance whose main component belongs to a component set — not only icons, but also buttons, modals, forms and more.
 
-- 選択したインスタンスのコンポーネントセットを自動取得
-- 同一セット内の全バリアントをサムネイル表示
-- サムネイルをクリックしてバリアントを差し替え
-- 起動時に今のバリアントが一覧の一行目に来るよう自動でスクロール
-- バリアントプロパティごとの単一選択フィルター
-- 各フィルターを個別に「すべて」へ戻すクリアボタン
-- フィルターセクションの開閉
-- 標準／大サイズのサムネイル表示
-- プラグインウインドウのリサイズ
-- システムテーマ対応
+## Features
 
-## 使い方
+- Automatically detects the component set of the selected instance
+- Shows every variant in the set as a thumbnail
+- Click a thumbnail to swap the variant
+- Scrolls so the current variant sits in the first row on launch
+- Single-select filter for each variant property
+- "Clear" button to reset each filter to "All"
+- Collapsible filter section
+- Standard and large thumbnail sizes
+- Japanese / English UI (follows your OS language until you choose one)
+- Remembers the thumbnail size and language for next time
+- Resizable plugin window
+- Follows the system light / dark theme
 
-1. コンポーネントセットに属するインスタンスを1つ選択します。
-2. **Variant picker** を起動します。
-3. 同じコンポーネントセットの候補が表示されます。
-4. 必要に応じてフィルターを開き、プロパティを絞り込みます。
-5. 変更したいサムネイルをクリックします。
+## Usage
 
-クリックした候補の全バリアントプロパティが、選択中のインスタンスへ適用されます。
+1. Select one instance that belongs to a component set.
+2. Run **Variant picker**.
+3. The variants of the same component set appear.
+4. Open the filters to narrow down by property if needed.
+5. Click the thumbnail you want.
 
-## フィルター
+All variant properties of the clicked variant are applied to the selected instance.
 
-- 各プロパティは1つの値だけ選択できます。
-- 複数プロパティ間はAND条件で絞り込みます。
-- 「すべて」は、そのプロパティを絞り込み条件から除外します。
-- 値が設定された行には「クリア」ボタンが表示されます。
-- 起動時と選択変更時は、すべてのプロパティが「すべて」の状態で始まります。
-- フィルターセクションはデフォルトで閉じています。
+You can switch the UI language from the globe icon in the top-right corner.
 
-## 読み込みとパフォーマンス
+## Filters
 
-ファイル内の全コンポーネントは読み込みません。選択中のインスタンスが属するコンポーネントセットだけを対象にします。
+- Each property accepts one value.
+- Multiple properties are combined with AND.
+- "All" removes that property from the conditions.
+- A "Clear" button appears on rows that have a value set.
+- Every property starts at "All" on launch and when the selection changes.
+- The filter section is collapsed by default.
 
-サムネイルは画面内に表示された候補から順次生成します。一度生成した画像は、プラグインを閉じるまでメモリにキャッシュされます。
+## Loading and performance
 
-## 対応条件
+The plugin does not load every component in the file — only the component set of the selected instance.
+
+Thumbnails are generated one by one as they scroll into view. Generated images are cached in memory until the plugin is closed.
+
+## Requirements
 
 - Figma Design
-- コンポーネントセットに属するインスタンス
-- ローカルまたは参照可能なコンポーネント
+- An instance that belongs to a component set
+- Local components, or components from libraries you can access
 
-単独コンポーネント、フレーム、グループなど、バリアントを持たない要素は対象外です。
+Standalone components, frames, groups and other layers without variants are not supported.
 
-## プライバシー
+## Privacy
 
-- 外部JavaScriptライブラリは使用していません。
-- 外部APIや外部サーバーへの通信は行いません。
-- `manifest.json` の `networkAccess.allowedDomains` を `["none"]` に設定し、外部ネットワークアクセスを禁止しています。
-- Figma標準APIとブラウザ標準APIのみを使用しています。
-- 開発用の依存パッケージ（esbuild、TypeScript）はビルド時にだけ使います。プラグイン本体には含まれません。
-- アイコンは [Material Symbols](https://github.com/google/material-design-icons)（Apache License 2.0）のSVGパスデータをコードに直接書いています。アイコンフォントや外部ファイルは読み込みません。
+- No external JavaScript libraries are used.
+- The plugin never communicates with external APIs or servers.
+- External network access is blocked by setting `networkAccess.allowedDomains` to `["none"]` in `manifest.json`.
+- Only the standard Figma plugin API and browser APIs are used.
+- The thumbnail size and language are stored per user in Figma's `clientStorage` and never sent anywhere.
+- Development dependencies (esbuild, TypeScript) are used only at build time and are not included in the plugin.
+- Icons are [Material Symbols](https://github.com/google/material-design-icons) (Apache License 2.0), embedded as SVG path data. No icon fonts or external files are loaded.
 
-## ソース構成
+## Source structure
 
-- `src/code.ts` — 選択取得、バリアント解析、差し替え、サムネイル生成
-- `src/ui/ui.html` — UIのマークアップ
-- `src/ui/ui.ts` — フィルター、表示設定、リサイズ処理
-- `src/ui/ui.css` — UIのスタイル
-- `src/shared/messages.ts` — プラグイン本体とUIの間でやりとりするメッセージの型
-- `src/manifest.json` — プラグイン設定
-- `dist/` — ビルドで生成されるFigma用ファイル
+- `src/code.ts` — selection handling, variant parsing, swapping, thumbnail generation, saving settings
+- `src/ui/ui.html` — UI markup
+- `src/ui/ui.ts` — filters, display settings, language switching, window resizing
+- `src/ui/ui.css` — UI styles
+- `src/ui/i18n.ts` — Japanese and English UI text
+- `src/shared/messages.ts` — types of the messages exchanged between the plugin and the UI
+- `src/manifest.json` — plugin manifest
+- `dist/` — files generated by the build for Figma
 
-## 開発とビルド
+## Development
 
-初回のみ依存パッケージをインストールします。
+Install the dependencies once:
 
 ```sh
 npm install
 ```
 
-次のコマンドで `src/code.ts` をFigmaが実行できる `dist/code.js` に変換します。UIは `ui.ts` と `ui.css` をまとめて `dist/ui.html` に埋め込み、`manifest.json` は `dist` へコピーします。ビルドのたびに `dist` は作り直されます。
+Build the plugin. `src/code.ts` is compiled to `dist/code.js`, `ui.ts` and `ui.css` are inlined into `dist/ui.html`, and `manifest.json` is copied to `dist`. `dist` is recreated on every build.
 
 ```sh
 npm run build
 ```
 
-開発中は次のコマンドで、ファイルを保存するたびに自動でビルドします。
+Rebuild automatically whenever a file is saved:
 
 ```sh
 npm run watch
 ```
 
-型チェックだけを行う場合は、次を実行します。
+Type-check only:
 
 ```sh
 npm run typecheck
 ```
+
+To try it locally, import `dist/manifest.json` from the Figma desktop app (**Plugins → Development → Import plugin from manifest…**).
 
 ## Plugin ID
 
@@ -103,4 +113,4 @@ npm run typecheck
 
 [MIT](LICENSE)
 
-アイコンには Material Symbols（Apache License 2.0）を使用しています。詳細は [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) を参照してください。
+Icons are from Material Symbols (Apache License 2.0). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for details.
