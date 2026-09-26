@@ -1,6 +1,8 @@
 import './ui.css'
-import type { Language, PluginToUiMessage, Settings, UiToPluginMessage, VariantEntry, VariantFilter } from '../shared/messages'
-import { detectLanguage, getLanguage, setLanguage, setText, setTooltip } from './i18n'
+import type { EmptyReason, Language, PluginToUiMessage, Settings, UiToPluginMessage, VariantEntry, VariantFilter } from '../shared/messages'
+import { detectLanguage, getLanguage, setLanguage, setText, setTooltip, t, type MessageKey } from './i18n'
+
+const EMPTY_MESSAGES: Record<EmptyReason, MessageKey> = { 'no-selection': 'noSelection', 'no-variants': 'noVariants', 'load-failed': 'loadFailed' }
 
 // Material Symbols Rounded: expand_more
 const ICON_EXPAND_MORE = '<svg viewBox="0 -960 960 960" aria-hidden="true"><path fill="currentColor" d="M480-362q-8 0-15-2.5t-13-8.5L268-557q-11-11-11-28t11-28q11-11 28-11t28 11l156 156 156-156q11-11 28-11t28 11q11 11 11 28t-11 28L508-373q-6 6-13 8.5t-15 2.5Z"/></svg>'
@@ -25,6 +27,8 @@ const entriesById = new Map<string, VariantEntry>()
 const selectedFilters = new Map<string, string>()
 let entries: VariantEntry[] = []
 let filters: VariantFilter[] = []
+// プラグイン本体が差し替えを確定したバリアント（失敗したときはここへ戻す）
+let confirmedId: string | null = null
 
 function post(message: UiToPluginMessage): void { parent.postMessage({ pluginMessage: message }, '*') }
 function saveSettings(settings: Partial<Settings>): void { post({ type: 'save-settings', settings }) }
@@ -91,6 +95,7 @@ function renderFilters(): void {
 function renderVariants(message: Extract<PluginToUiMessage, { type: 'variants' }>): void {
   hideTooltip(); clearImages(); observer.disconnect(); grid.replaceChildren(); elementsById.clear(); entriesById.clear(); selectedFilters.clear()
   entries = message.entries; filters = message.filters
+  confirmedId = entries.find((entry) => entry.selected)?.id ?? null
   title.textContent = message.title; empty.style.display = 'none'; grid.style.display = 'grid'
   renderFilters()
   for (const entry of entries) {
@@ -224,7 +229,7 @@ window.addEventListener('message', (event: MessageEvent<{ pluginMessage?: Plugin
     setLarge(message.settings.largeThumbnails)
   } else if (message.type === 'empty') {
     hideTooltip(); clearImages(); observer.disconnect(); grid.replaceChildren(); filtersElement.replaceChildren(); filtersElement.style.display = 'none'; grid.style.display = 'none'
-    setText(empty, message.reason === 'no-selection' ? 'noSelection' : 'noVariants'); empty.style.display = 'grid'; title.textContent = 'Variant picker'; setText(meta, 'selectInstance')
+    setText(empty, EMPTY_MESSAGES[message.reason]); empty.style.display = 'grid'; title.textContent = 'Variant picker'; setText(meta, 'selectInstance')
   } else if (message.type === 'variants') renderVariants(message)
   else if (message.type === 'thumbnail') {
     const item = elementsById.get(message.id); if (!item) return
@@ -232,5 +237,9 @@ window.addEventListener('message', (event: MessageEvent<{ pluginMessage?: Plugin
     const url = URL.createObjectURL(new Blob([message.bytes as BlobPart], { type: 'image/png' })); imageUrls.set(message.id, url)
     const image = document.createElement('img'); image.src = url; image.alt = ''; item.querySelector('.thumb')?.replaceChildren(image)
   } else if (message.type === 'thumbnail-error') { const thumb = elementsById.get(message.id)?.querySelector('.thumb'); if (thumb) thumb.textContent = '—' }
-  else if (message.type === 'selected') selectId(message.id)
+  else if (message.type === 'selected') { confirmedId = message.id; selectId(message.id) }
+  else if (message.type === 'error') {
+    if (confirmedId) selectId(confirmedId); else elementsById.forEach((element) => element.classList.remove('selected'))
+    post({ type: 'notify', message: t('swapFailed'), error: true })
+  }
 })

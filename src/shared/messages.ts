@@ -21,7 +21,10 @@ export type Settings = {
 }
 
 // 一覧を表示できない理由（文言は UI 側で言語に合わせて出す）
-export type EmptyReason = 'no-selection' | 'no-variants'
+export type EmptyReason = 'no-selection' | 'no-variants' | 'load-failed'
+
+// 操作に失敗した理由（文言は UI 側で訳し、notify で Figma に通知してもらう）
+export type ErrorReason = 'swap-failed'
 
 // UI → プラグイン本体
 export type UiToPluginMessage =
@@ -30,6 +33,7 @@ export type UiToPluginMessage =
   | { type: 'refresh' }
   | { type: 'resize'; width: number; height: number }
   | { type: 'save-settings'; settings: Partial<Settings> }
+  | { type: 'notify'; message: string; error: boolean }
 
 // プラグイン本体 → UI
 export type PluginToUiMessage =
@@ -39,3 +43,4 @@ export type PluginToUiMessage =
   | { type: 'thumbnail'; id: string; bytes: Uint8Array }
   | { type: 'thumbnail-error'; id: string }
   | { type: 'selected'; id: string }
+  | { type: 'error'; reason: ErrorReason }

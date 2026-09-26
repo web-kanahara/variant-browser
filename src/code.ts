@@ -1,8 +1,5 @@
 import type { PluginToUiMessage, Settings, UiToPluginMessage, VariantEntry, VariantProperties } from './shared/messages'
 
-// manifest.json の relaunchButtons[].command と一致させる
-const RELAUNCH_COMMAND = 'open'
-const DISPLAY_NAME = 'Variant picker'
 const SETTINGS_KEY = 'settings'
 const thumbnailCache = new Map<string, Uint8Array>()
 const visibleComponents = new Map<string, ComponentNode>()
@@ -72,6 +69,17 @@ async function sendThumbnail(id: string): Promise<void> {
 async function refresh(): Promise<void> {
   const token = ++refreshToken
   visibleComponents.clear()
+  try {
+    await loadVariants(token)
+  } catch {
+    // 壊れたコンポーネントセットなどで読み込めないときも、画面を止めずに理由を出す
+    if (token !== refreshToken) return
+    visibleComponents.clear()
+    post({ type: 'empty', reason: 'load-failed' })
+  }
+}
+
+async function loadVariants(token: number): Promise<void> {
   const selection = figma.currentPage.selection
   if (selection.length !== 1 || selection[0].type !== 'INSTANCE') {
     post({ type: 'empty', reason: 'no-selection' })
@@ -121,11 +129,9 @@ async function chooseVariant(id: string, properties: VariantProperties): Promise
   if (selection.length !== 1 || selection[0].type !== 'INSTANCE') return
   try {
     selection[0].setProperties(properties)
-    selection[0].setRelaunchData({ [RELAUNCH_COMMAND]: DISPLAY_NAME })
     post({ type: 'selected', id })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    figma.notify(message, { error: true })
+  } catch {
+    post({ type: 'error', reason: 'swap-failed' })
   }
 }
 
@@ -136,6 +142,7 @@ figma.ui.onmessage = (message: UiToPluginMessage) => {
   if (message.type === 'request-thumbnail') void sendThumbnail(message.id)
   if (message.type === 'refresh') void refresh()
   if (message.type === 'save-settings') void saveSettings(message.settings)
+  if (message.type === 'notify') figma.notify(message.message, { error: message.error })
   if (message.type === 'resize') {
     const width = Math.max(280, Math.min(900, Math.round(message.width)))
     const height = Math.max(320, Math.min(900, Math.round(message.height)))

@@ -12,11 +12,5 @@
   "editorType": [
     "figma"
   ],
-  "relaunchButtons": [
-    {
-      "command": "open",
-      "name": "Variant picker"
-    }
-  ],
   "ui": "ui.html"
 }
