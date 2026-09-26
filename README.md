@@ -1,8 +1,8 @@
-# Variant picker
+# Variant Browser
 
 English | [日本語](README.ja.md)
 
-A Figma plugin for switching component variants while previewing them as thumbnails.
+Swap variants by picking from thumbnails — a Figma plugin that shows every variant of the selected instance as a thumbnail grid.
 
 It works with any instance whose main component belongs to a component set — not only icons, but also buttons, modals, forms and more.
 
@@ -24,7 +24,7 @@ It works with any instance whose main component belongs to a component set — n
 ## Usage
 
 1. Select one instance that belongs to a component set.
-2. Run **Variant picker**.
+2. Run **Variant Browser**.
 3. The variants of the same component set appear.
 4. Open the filters to narrow down by property if needed.
 5. Click the thumbnail you want.

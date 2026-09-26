@@ -229,7 +229,7 @@ window.addEventListener('message', (event: MessageEvent<{ pluginMessage?: Plugin
     setLarge(message.settings.largeThumbnails)
   } else if (message.type === 'empty') {
     hideTooltip(); clearImages(); observer.disconnect(); grid.replaceChildren(); filtersElement.replaceChildren(); filtersElement.style.display = 'none'; grid.style.display = 'none'
-    setText(empty, EMPTY_MESSAGES[message.reason]); empty.style.display = 'grid'; title.textContent = 'Variant picker'; setText(meta, 'selectInstance')
+    setText(empty, EMPTY_MESSAGES[message.reason]); empty.style.display = 'grid'; title.textContent = 'Variant Browser'; setText(meta, 'selectInstance')
   } else if (message.type === 'variants') renderVariants(message)
   else if (message.type === 'thumbnail') {
     const item = elementsById.get(message.id); if (!item) return

@@ -1,8 +1,8 @@
 {
-  "name": "variant-picker",
+  "name": "variant-browser",
   "version": "0.1.0",
   "private": true,
-  "description": "Figmaのコンポーネントバリアントをサムネイルから選択するプラグイン",
+  "description": "Swap variants by picking from thumbnails (Figma plugin)",
   "license": "MIT",
   "scripts": {
     "build": "node build.js",
