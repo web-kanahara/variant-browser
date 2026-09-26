@@ -2,6 +2,8 @@
 
 English | [日本語](README.ja.md)
 
+![Variant Browser — swap variants by picking from thumbnails. The plugin shows every variant of the selected instance as a thumbnail grid.](docs/cover.png)
+
 Swap variants by picking from thumbnails — a Figma plugin that shows every variant of the selected instance as a thumbnail grid.
 
 It works with any instance whose main component belongs to a component set — not only icons, but also buttons, modals, forms and more.
