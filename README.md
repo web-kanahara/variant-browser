@@ -17,9 +17,9 @@ It works with any instance whose main component belongs to a component set — n
 - Collapsible filter section
 - Standard and large thumbnail sizes
 - Japanese / English UI (follows your OS language until you choose one)
-- Remembers the thumbnail size and language for next time
+- Remembers the thumbnail size, theme and language for next time
 - Resizable plugin window
-- Follows Figma's light / dark theme
+- Theme: Light, Dark or Auto (default — follows Figma's theme)
 
 ## Usage
 
@@ -31,7 +31,7 @@ It works with any instance whose main component belongs to a component set — n
 
 All variant properties of the clicked variant are applied to the selected instance.
 
-You can switch the UI language from the globe icon in the top-right corner.
+You can switch the theme and language from the settings (gear) icon in the top-right corner. If some thumbnails are hard to see — for example, white icons on the light theme — switch the plugin to the dark theme.
 
 ## Filters
 
@@ -62,7 +62,7 @@ Standalone components, frames, groups and other layers without variants are not 
 - The plugin never communicates with external APIs or servers.
 - External network access is blocked by setting `networkAccess.allowedDomains` to `["none"]` in `manifest.json`.
 - Only the standard Figma plugin API and browser APIs are used.
-- The thumbnail size and language are stored per user in Figma's `clientStorage` and never sent anywhere.
+- The thumbnail size, theme and language are stored per user in Figma's `clientStorage` and never sent anywhere.
 - Development dependencies (esbuild, TypeScript) are used only at build time and are not included in the plugin.
 - Icons are [Material Symbols](https://github.com/google/material-design-icons) (Apache License 2.0), embedded as SVG path data. No icon fonts or external files are loaded.
 
@@ -70,7 +70,7 @@ Standalone components, frames, groups and other layers without variants are not 
 
 - `src/code.ts` — selection handling, variant parsing, swapping, thumbnail generation, saving settings
 - `src/ui/ui.html` — UI markup
-- `src/ui/ui.ts` — filters, display settings, language switching, window resizing
+- `src/ui/ui.ts` — filters, display settings, theme and language switching, window resizing
 - `src/ui/ui.css` — UI styles
 - `src/ui/i18n.ts` — Japanese and English UI text
 - `src/shared/messages.ts` — types of the messages exchanged between the plugin and the UI

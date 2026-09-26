@@ -1,11 +1,13 @@
 import './ui.css'
-import type { EmptyReason, Language, PluginToUiMessage, Settings, UiToPluginMessage, VariantEntry, VariantFilter } from '../shared/messages'
-import { detectLanguage, getLanguage, setLanguage, setText, setTooltip, t, type MessageKey } from './i18n'
+import type { EmptyReason, Language, PluginToUiMessage, Settings, Theme, ThemeSetting, UiToPluginMessage, VariantEntry, VariantFilter } from '../shared/messages'
+import { detectLanguage, setLanguage, setText, setTooltip, t, type MessageKey } from './i18n'
 
 const EMPTY_MESSAGES: Record<EmptyReason, MessageKey> = { 'no-selection': 'noSelection', 'no-variants': 'noVariants', 'load-failed': 'loadFailed' }
 
 // Material Symbols Rounded: expand_more
 const ICON_EXPAND_MORE = '<svg viewBox="0 -960 960 960" aria-hidden="true"><path fill="currentColor" d="M480-362q-8 0-15-2.5t-13-8.5L268-557q-11-11-11-28t11-28q11-11 28-11t28 11l156 156 156-156q11-11 28-11t28 11q11 11 11 28t-11 28L508-373q-6 6-13 8.5t-15 2.5Z"/></svg>'
+// Material Symbols Rounded: check
+const ICON_CHECK = '<svg viewBox="0 -960 960 960" aria-hidden="true"><path fill="currentColor" d="m382-354 339-339q12-12 28-12t28 12q12 12 12 28.5T777-636L410-268q-12 12-28 12t-28-12L182-440q-12-12-11.5-28.5T183-497q12-12 28.5-12t28.5 12l142 143Z"/></svg>'
 
 function createIcon(svg: string, className: string): SVGElement {
   const template = document.createElement('template')
@@ -159,7 +161,7 @@ function tooltipTargetOf(event: Event): HTMLElement | null {
   return event.target instanceof Element ? event.target.closest<HTMLElement>('[data-tooltip]') : null
 }
 
-document.addEventListener('pointerover', (event) => { const target = tooltipTargetOf(event); if (target && languageMenu.hidden) scheduleTooltip(target); else hideTooltip() })
+document.addEventListener('pointerover', (event) => { const target = tooltipTargetOf(event); if (target && settingsMenu.hidden) scheduleTooltip(target); else hideTooltip() })
 document.documentElement.addEventListener('pointerleave', hideTooltip)
 document.addEventListener('pointerdown', hideTooltip)
 document.addEventListener('focusin', (event) => { const target = tooltipTargetOf(event); if (target?.matches(':focus-visible')) scheduleTooltip(target) })
@@ -174,47 +176,70 @@ normalButton.addEventListener('click', () => { setLarge(false); saveSettings({ l
 largeButton.addEventListener('click', () => { setLarge(true); saveSettings({ largeThumbnails: true }) })
 document.getElementById('refresh')?.addEventListener('click', () => post({ type: 'refresh' }))
 
-const languageAnchor = document.getElementById('language-anchor') as HTMLDivElement
-const languageButton = document.getElementById('language') as HTMLButtonElement
-const languageMenu = document.getElementById('language-menu') as HTMLDivElement
-const languageItems = Array.from(languageMenu.querySelectorAll<HTMLButtonElement>('[data-language]'))
+const settingsAnchor = document.getElementById('settings-anchor') as HTMLDivElement
+const settingsButton = document.getElementById('settings') as HTMLButtonElement
+const settingsMenu = document.getElementById('settings-menu') as HTMLDivElement
+const menuItems = Array.from(settingsMenu.querySelectorAll<HTMLButtonElement>('.menu-item'))
+menuItems.forEach((item) => item.prepend(createIcon(ICON_CHECK, 'menu-check')))
+let themeSetting: ThemeSetting = 'auto'
+
+function markChecked(setting: 'theme' | 'language', value: string): void {
+  menuItems.filter((item) => item.dataset.setting === setting).forEach((item) => item.setAttribute('aria-checked', String(item.dataset.value === value)))
+}
 
 function applyLanguage(language: Language): void {
   setLanguage(language)
-  languageItems.forEach((item) => item.setAttribute('aria-checked', String(item.dataset.language === language)))
+  markChecked('language', language)
 }
 
-function openLanguageMenu(): void {
+// 自動のときは、Figma が <html> に付ける figma-dark クラスを見て決める
+function applyTheme(setting: ThemeSetting): void {
+  themeSetting = setting
+  const theme: Theme = setting === 'auto' ? (document.documentElement.classList.contains('figma-dark') ? 'dark' : 'light') : setting
+  document.documentElement.dataset.theme = theme
+  markChecked('theme', setting)
+}
+// 自動のあいだは、Figma 側でテーマが切り替わったら追従する
+new MutationObserver(() => { if (themeSetting === 'auto') applyTheme('auto') }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+
+function openSettingsMenu(): void {
   hideTooltip()
-  languageMenu.hidden = false
-  languageButton.setAttribute('aria-expanded', 'true')
-  languageItems.find((item) => item.dataset.language === getLanguage())?.focus()
+  settingsMenu.hidden = false
+  settingsButton.setAttribute('aria-expanded', 'true')
+  menuItems.find((item) => item.getAttribute('aria-checked') === 'true')?.focus()
 }
 
-function closeLanguageMenu(returnFocus = false): void {
-  if (languageMenu.hidden) return
-  languageMenu.hidden = true
-  languageButton.setAttribute('aria-expanded', 'false')
-  if (returnFocus) languageButton.focus()
+function closeSettingsMenu(returnFocus = false): void {
+  if (settingsMenu.hidden) return
+  settingsMenu.hidden = true
+  settingsButton.setAttribute('aria-expanded', 'false')
+  if (returnFocus) settingsButton.focus()
 }
 
-languageButton.addEventListener('click', () => { if (languageMenu.hidden) openLanguageMenu(); else closeLanguageMenu() })
-languageItems.forEach((item) => item.addEventListener('click', () => {
-  const language = item.dataset.language as Language
-  applyLanguage(language)
-  saveSettings({ language })
-  closeLanguageMenu(true)
+settingsButton.addEventListener('click', () => { if (settingsMenu.hidden) openSettingsMenu(); else closeSettingsMenu() })
+menuItems.forEach((item) => item.addEventListener('click', () => {
+  if (item.dataset.setting === 'theme') {
+    const theme = item.dataset.value as ThemeSetting
+    applyTheme(theme)
+    saveSettings({ theme })
+  } else {
+    const language = item.dataset.value as Language
+    applyLanguage(language)
+    saveSettings({ language })
+  }
+  closeSettingsMenu(true)
 }))
-languageMenu.addEventListener('keydown', (event) => {
+settingsMenu.addEventListener('keydown', (event) => {
   if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
   event.preventDefault()
-  const index = languageItems.indexOf(document.activeElement as HTMLButtonElement)
-  const next = (index + (event.key === 'ArrowDown' ? 1 : languageItems.length - 1)) % languageItems.length
-  languageItems[next].focus()
+  const index = menuItems.indexOf(document.activeElement as HTMLButtonElement)
+  const next = (index + (event.key === 'ArrowDown' ? 1 : menuItems.length - 1)) % menuItems.length
+  menuItems[next].focus()
 })
-document.addEventListener('pointerdown', (event) => { if (!(event.target instanceof Node) || !languageAnchor.contains(event.target)) closeLanguageMenu() })
-document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeLanguageMenu(true) })
+document.addEventListener('pointerdown', (event) => { if (!(event.target instanceof Node) || !settingsAnchor.contains(event.target)) closeSettingsMenu() })
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeSettingsMenu(true) })
 applyLanguage(detectLanguage())
+applyTheme('auto')
 
 const resizeHandle = document.getElementById('resize-handle') as HTMLDivElement; let resizeStart: { x: number; y: number; width: number; height: number } | null = null
 resizeHandle.addEventListener('pointerdown', (event) => { resizeStart = { x: event.clientX, y: event.clientY, width: innerWidth, height: innerHeight }; resizeHandle.setPointerCapture(event.pointerId); event.preventDefault() })
@@ -226,6 +251,7 @@ window.addEventListener('message', (event: MessageEvent<{ pluginMessage?: Plugin
   if (!message) return
   if (message.type === 'settings') {
     applyLanguage(message.settings.language ?? detectLanguage())
+    applyTheme(message.settings.theme)
     setLarge(message.settings.largeThumbnails)
   } else if (message.type === 'empty') {
     hideTooltip(); clearImages(); observer.disconnect(); grid.replaceChildren(); filtersElement.replaceChildren(); filtersElement.style.display = 'none'; grid.style.display = 'none'

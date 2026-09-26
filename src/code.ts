@@ -4,7 +4,7 @@ const SETTINGS_KEY = 'settings'
 const thumbnailCache = new Map<string, Uint8Array>()
 const visibleComponents = new Map<string, ComponentNode>()
 let refreshToken = 0
-let settings: Settings = { language: null, largeThumbnails: false }
+let settings: Settings = { language: null, theme: 'auto', largeThumbnails: false }
 
 function post(message: PluginToUiMessage): void {
   figma.ui.postMessage(message)
@@ -15,6 +15,7 @@ async function loadSettings(): Promise<Settings> {
   const value = (stored && typeof stored === 'object' ? stored : {}) as Partial<Settings>
   return {
     language: value.language === 'ja' || value.language === 'en' ? value.language : null,
+    theme: value.theme === 'light' || value.theme === 'dark' ? value.theme : 'auto',
     largeThumbnails: value.largeThumbnails === true,
   }
 }

@@ -14,9 +14,15 @@ export type VariantFilter = {
 
 export type Language = 'ja' | 'en'
 
-// figma.clientStorage に保存するユーザー設定（language が null のときは UI が OS の言語から決める）
+export type Theme = 'light' | 'dark'
+
+// auto は Figma のテーマに合わせる（Figma 側が「システム」なら、Figma が決めた結果に合わせる）
+export type ThemeSetting = Theme | 'auto'
+
+// figma.clientStorage に保存するユーザー設定（language が null のときは OS の言語に合わせる）
 export type Settings = {
   language: Language | null
+  theme: ThemeSetting
   largeThumbnails: boolean
 }
 

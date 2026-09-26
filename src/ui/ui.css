@@ -1,4 +1,4 @@
-/* 配色は Figma のテーマに合わせる（themeColors: true で <html> に figma-light / figma-dark が付く） */
+/* 配色は <html data-theme> で切り替える。ui.ts が設定（Figma に合わせる／ライト／ダーク）と Figma の figma-dark クラスから決める */
 :root {
   color-scheme: light;
   --bg: #fff;
@@ -15,7 +15,7 @@
   --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--contrast);
   --shadow: 0 1px 2px rgba(0,0,0,.04);
 }
-:root.figma-dark {
+:root[data-theme="dark"] {
   color-scheme: dark;
   --bg: #000;
   --bg-raised: #0a0a0a;
@@ -50,12 +50,14 @@ h1 { margin: 0; font-size: 14px; line-height: 20px; font-weight: 600; letter-spa
 .icon-button[aria-pressed="true"] { border-color: var(--gray-200); background: var(--bg-raised); color: var(--contrast); box-shadow: var(--shadow); }
 .icon-button > svg { position: absolute; top: 50%; left: 50%; width: 18px; height: 18px; display: block; transform: translate(-50%, -50%); }
 .menu-anchor { position: relative; }
-#language[aria-expanded="true"] { background: var(--gray-200); color: var(--contrast); }
-.menu { position: absolute; z-index: 900; top: calc(100% + 6px); right: 0; min-width: 148px; padding: 4px; border: 1px solid var(--gray-200); border-radius: 8px; background: var(--bg-raised); box-shadow: 0 8px 24px rgba(0,0,0,.14); }
+#settings[aria-expanded="true"] { background: var(--gray-200); color: var(--contrast); }
+.menu { position: absolute; z-index: 900; top: calc(100% + 6px); right: 0; min-width: 188px; padding: 4px; border: 1px solid var(--gray-200); border-radius: 8px; background: var(--bg-raised); box-shadow: 0 8px 24px rgba(0,0,0,.14); }
 .menu-item { width: 100%; height: 32px; display: flex; align-items: center; gap: 8px; padding: 0 12px 0 8px; border: 0; border-radius: 6px; background: transparent; color: var(--fg); font-size: 13px; text-align: left; cursor: pointer; }
 .menu-item:hover, .menu-item:focus-visible { background: var(--gray-100); }
 .menu-check { width: 18px; height: 18px; flex: none; visibility: hidden; }
 .menu-item[aria-checked="true"] .menu-check { visibility: visible; }
+.menu-label { padding: 6px 8px 4px; color: var(--gray-700); font-size: 11px; font-weight: 600; }
+.menu-separator { height: 1px; margin: 4px 0; background: var(--gray-200); }
 #filters { display: none; flex: none; max-height: 304px; overflow: auto; padding: 0 16px; border-bottom: 1px solid var(--gray-200); background: var(--bg-raised); }
 .filter-heading { display: flex; align-items: center; height: 44px; }
 .filter-toggle { height: 32px; display: flex; align-items: center; gap: 4px; margin-left: -8px; padding: 0 6px 0 8px; border: 0 !important; border-radius: 6px; background: transparent !important; color: var(--gray-900) !important; font-weight: 500; cursor: pointer; outline: none !important; box-shadow: none !important; transition: background .15s ease, color .15s ease; }

@@ -7,7 +7,7 @@ This plugin includes the following third-party material.
 - Source: https://github.com/google/material-design-icons
 - Copyright: Google LLC
 - License: Apache License 2.0 (full text below)
-- Used: SVG path data of the Rounded style icons `apps`, `grid_view` (fill), `refresh`, `expand_more`, `language`, `check`, embedded in `src/ui/ui.html` and `src/ui/ui.ts`. No icon fonts or files are loaded at runtime.
+- Used: SVG path data of the Rounded style icons `apps`, `grid_view` (fill), `refresh`, `expand_more`, `settings`, `check`, embedded in `src/ui/ui.html` and `src/ui/ui.ts`. No icon fonts or files are loaded at runtime.
 
 ---
 
