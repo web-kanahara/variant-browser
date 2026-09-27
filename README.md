@@ -107,10 +107,6 @@ npm run typecheck
 
 To try it locally, import `dist/manifest.json` from the Figma desktop app (**Plugins → Development → Import plugin from manifest…**).
 
-## Plugin ID
-
-`c0f24597-6cf3-431b-83aa-73cf004a524f`
-
 ## License
 
 [MIT](LICENSE)
